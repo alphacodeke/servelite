@@ -1,10 +1,9 @@
-# ServeLite ⚡
+# ServeLite
 
 **Instant local file sharing — zero dependencies, one command.**
 
 Share files between any devices on the same Wi-Fi network. No cloud. No signup. No frameworks.
 
----
 
 ## Tech Stack
 
@@ -16,8 +15,6 @@ Share files between any devices on the same Wi-Fi network. No cloud. No signup. 
 ![Zero Dependencies](https://img.shields.io/badge/Zero-Dependencies-4CAF50?style=for-the-badge&logo=zero&logoColor=white)
 ![Open Source](https://img.shields.io/badge/Open-Source-3DA639?style=for-the-badge&logo=open-source-initiative&logoColor=white)
 
----
-
 ## Quick Start
 
 ```bash
@@ -28,7 +25,6 @@ chmod +x start.sh
 That's it. Your browser opens automatically.  
 Other devices on the same network visit the printed URL (e.g. `http://192.168.1.42:8000`).
 
----
 
 ## File Structure
 
@@ -40,7 +36,6 @@ ServeLite/
 └── uploads/     ← All uploaded files land here (auto-created)
 ```
 
----
 
 ## Features
 
@@ -52,7 +47,6 @@ ServeLite/
 | Cross-device | Served on `0.0.0.0` — any LAN device can connect |
 | Zero deps | Pure Python 3 stdlib + plain HTML/CSS/JS |
 
----
 
 ## Manual Start (no script)
 
@@ -61,7 +55,6 @@ python3 server.py
 # then open http://localhost:8000
 ```
 
----
 
 ## API Endpoints
 
@@ -72,7 +65,6 @@ python3 server.py
 | `GET` | `/uploads/<name>` | Downloads a specific file |
 | `POST` | `/upload` | Uploads a file (multipart/form-data, field: `file`) |
 
----
 
 ## Requirements
 
@@ -80,7 +72,6 @@ python3 server.py
 - A modern browser
 - Devices on the same Wi-Fi / LAN
 
----
 
 ## 👨‍💻 Developer
 
@@ -90,7 +81,6 @@ python3 server.py
 [![Email](https://img.shields.io/badge/Email-anthonykaranja018%40gmail.com-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:anthonykaranja018@gmail.com)
 [![GitHub](https://img.shields.io/badge/GitHub-ALPHACODEKE-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/alphacodeke)
 
----
 
 ## License
 
