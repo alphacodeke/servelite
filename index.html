@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ServeLite — Local File Sharing Powered by ALPHACODE SOLUTIONS</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:       #0c0e10;
+      --surface:  #13181d;
+      --border:   #1f2830;
+      --accent:   #00e5a0;
+      --accent2:  #00b4ff;
+      --text:     #e2e8f0;
+      --muted:    #4a6070;
+      --danger:   #ff4d6a;
+      --mono:     'JetBrains Mono', monospace;
+      --sans:     'Syne', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: .35;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,.08) 2px,
+        rgba(0,0,0,.08) 4px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrap {
+      position: relative; z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.5rem 0 2.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2.5rem;
+    }
+
+    .logo-block { display: flex; flex-direction: column; gap: .25rem; }
+
+    .logo {
+      font-family: var(--sans);
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: -.04em;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tagline {
+      font-size: .72rem;
+      color: var(--muted);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .status-pill {
+      display: flex; align-items: center; gap: .5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: .4rem 1rem;
+      font-size: .72rem;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: .3; }
+    }
+
+    .sec-label {
+      font-size: .65rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .75rem;
+    }
+
+    #drop-zone {
+      position: relative;
+      border: 1.5px dashed var(--border);
+      border-radius: 6px;
+      padding: 3.5rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      background: var(--surface);
+      margin-bottom: 2.5rem;
+      overflow: hidden;
+    }
+
+    #drop-zone::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(0,229,160,.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    #drop-zone.dragging {
+      border-color: var(--accent);
+      background: rgba(0,229,160,.04);
+    }
+
+    #drop-zone.dragging::before {
+      background: radial-gradient(ellipse at 50% 0%, rgba(0,229,160,.14) 0%, transparent 70%);
+    }
+
+    .drop-icon {
+      font-size: 2.4rem;
+      margin-bottom: 1rem;
+      line-height: 1;
+    }
+
+    .drop-title {
+      font-family: var(--sans);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: .4rem;
+    }
+
+    .drop-sub {
+      font-size: .75rem;
+      color: var(--muted);
+    }
+
+    .drop-sub span {
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    #file-input { display: none; }
+
+    #progress-queue {
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+      margin-bottom: 2rem;
+    }
+
+    .prog-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .7rem 1rem;
+      animation: slideIn .25s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .prog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: .45rem;
+    }
+
+    .prog-name {
+      font-size: .78rem;
+      color: var(--text);
+      max-width: 65%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .prog-pct {
+      font-size: .72rem;
+      color: var(--accent);
+    }
+
+    .prog-bar-track {
+      height: 3px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .prog-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 99px;
+      width: 0%;
+      transition: width .3s ease;
+    }
+
+    .prog-bar-fill.done { background: var(--accent); }
+    .prog-bar-fill.error { background: var(--danger); }
+
+    .list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    #refresh-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: .7rem;
+      padding: .35rem .75rem;
+      border-radius: 4px;
+      cursor: pointer;
+      letter-spacing: .06em;
+      transition: border-color .2s, color .2s;
+    }
+
+    #refresh-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+    #file-list {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+
+    .file-row {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .8rem 1rem;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color .2s, background .2s;
+      animation: slideIn .2s ease;
+    }
+
+    .file-row:hover {
+      border-color: var(--accent2);
+      background: rgba(0,180,255,.04);
+    }
+
+    .file-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+    .file-info { flex: 1; min-width: 0; }
+
+    .file-name {
+      font-size: .82rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-meta {
+      font-size: .65rem;
+      color: var(--muted);
+      margin-top: .2rem;
+    }
+
+    .dl-badge {
+      font-size: .65rem;
+      color: var(--accent2);
+      border: 1px solid rgba(0,180,255,.3);
+      border-radius: 3px;
+      padding: .2rem .5rem;
+      letter-spacing: .08em;
+      flex-shrink: 0;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+      font-size: .8rem;
+      border: 1px dashed var(--border);
+      border-radius: 4px;
+      background: var(--surface);
+    }
+
+    .empty-icon { font-size: 2rem; margin-bottom: .75rem; }
+
+    #toast-rack {
+      position: fixed;
+      bottom: 1.5rem; right: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+      z-index: 100;
+    }
+
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      padding: .7rem 1.1rem;
+      font-size: .75rem;
+      color: var(--text);
+      animation: toastIn .3s ease, toastOut .3s ease 2.7s forwards;
+      max-width: 280px;
+    }
+
+    .toast.error { border-left-color: var(--danger); }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes toastOut {
+      from { opacity: 1; transform: translateX(0); }
+      to   { opacity: 0; transform: translateX(20px); }
+    }
+
+    footer {
+      margin-top: 4rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: .65rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: .5rem;
+    }
+
+    #server-url { color: var(--accent); }
+
+    @media (max-width: 520px) {
+      header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+      footer { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo-block">
+      <div class="logo">ServeLite</div>
+      <div class="tagline">Instant local file sharing</div>
+    </div>
+    <div class="status-pill">
+      <span class="dot"></span>
+      <span id="status-text">Server online</span>
+    </div>
+  </header>
+
+  <p class="sec-label">// Upload</p>
+  <div id="drop-zone">
+    <div class="drop-icon">⬆</div>
+    <div class="drop-title">Drop files here</div>
+    <div class="drop-sub">or <span id="browse-link">browse to upload</span></div>
+    <input type="file" id="file-input" multiple />
+  </div>
+
+  <div id="progress-queue"></div>
+
+
+  <div class="list-header">
+    <p class="sec-label" style="margin-bottom:0">// Available files</p>
+    <button id="refresh-btn">↻ Refresh</button>
+  </div>
+  <div id="file-list"></div>
+
+  
+  <footer>
+    <span>ServeLite · Python HTTP · No frameworks · Powered by<a href="https://anthonyke.netlify.app" style="color: #00e5a0;">ALPHACODE SOLUTIONS</a></span>
+    <span>Access from other devices: <span id="server-url">http://&lt;your-ip&gt;:8000</span></span>
+  </footer>
+</div>
+
+<div id="toast-rack"></div>
+
+<script>
+  function toast(msg, type = 'ok') {
+    const rack = document.getElementById('toast-rack');
+    const el = document.createElement('div');
+    el.className = 'toast' + (type === 'error' ? ' error' : '');
+    el.textContent = msg;
+    rack.appendChild(el);
+    setTimeout(() => el.remove(), 3200);
+  }
+
+  function fileIcon(name) {
+    const ext = name.split('.').pop().toLowerCase();
+    const map = {
+      pdf:'📄', png:'🖼', jpg:'🖼', jpeg:'🖼', gif:'🖼', svg:'🖼', webp:'🖼',
+      mp4:'🎬', mov:'🎬', avi:'🎬', mkv:'🎬',
+      mp3:'🎵', wav:'🎵', ogg:'🎵', flac:'🎵',
+      zip:'🗜', gz:'🗜', tar:'🗜', rar:'🗜',
+      py:'🐍', js:'📜', ts:'📜', html:'🌐', css:'🎨',
+      txt:'📝', md:'📝', json:'📋', csv:'📊', xml:'📋',
+    };
+    return map[ext] || '📦';
+  }
+
+  function humanSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  const zone      = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  const browseLink = document.getElementById('browse-link');
+
+  browseLink.addEventListener('click', () => fileInput.click());
+  zone.addEventListener('click', (e) => {
+    if (e.target !== browseLink) fileInput.click();
+  });
+
+  fileInput.addEventListener('change', () => {
+    uploadFiles(Array.from(fileInput.files));
+    fileInput.value = '';
+  });
+
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragging'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragging'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragging');
+    uploadFiles(Array.from(e.dataTransfer.files));
+  });
+
+  
+  function uploadFiles(files) {
+    files.forEach(uploadOne);
+  }
+
+  function uploadOne(file) {
+    const queue = document.getElementById('progress-queue');
+    const id = 'p-' + Date.now() + Math.random().toString(36).slice(2);
+
+    const item = document.createElement('div');
+    item.className = 'prog-item';
+    item.id = id;
+    item.innerHTML = `
+      <div class="prog-header">
+        <span class="prog-name">${file.name}</span>
+        <span class="prog-pct" id="${id}-pct">0%</span>
+      </div>
+      <div class="prog-bar-track">
+        <div class="prog-bar-fill" id="${id}-bar"></div>
+      </div>`;
+    queue.appendChild(item);
+
+    const xhr = new XMLHttpRequest();
+    const fd  = new FormData();
+    fd.append('file', file);
+
+    xhr.upload.addEventListener('progress', e => {
+      if (!e.lengthComputable) return;
+      const pct = Math.round((e.loaded / e.total) * 100);
+      document.getElementById(id + '-pct').textContent = pct + '%';
+      document.getElementById(id + '-bar').style.width = pct + '%';
+    });
+
+    xhr.addEventListener('load', () => {
+      const bar = document.getElementById(id + '-bar');
+      if (xhr.status === 200) {
+        bar.classList.add('done');
+        document.getElementById(id + '-pct').textContent = '✓';
+        toast(`${file.name} uploaded`);
+        setTimeout(() => item.remove(), 2000);
+        loadFiles();
+      } else {
+        bar.classList.add('error');
+        document.getElementById(id + '-pct').textContent = 'ERR';
+        toast(`Upload failed: ${file.name}`, 'error');
+      }
+    });
+
+    xhr.addEventListener('error', () => {
+      document.getElementById(id + '-bar').classList.add('error');
+      document.getElementById(id + '-pct').textContent = 'ERR';
+      toast(`Network error uploading ${file.name}`, 'error');
+    });
+
+    xhr.open('POST', '/upload');
+    xhr.send(fd);
+  }
+
+  async function loadFiles() {
+    const list = document.getElementById('file-list');
+    try {
+      const res  = await fetch('/files');
+      const data = await res.json();
+
+      if (!data.length) {
+        list.innerHTML = `<div class="empty-state">
+          <div class="empty-icon">📭</div>
+          No files yet — upload something above
+        </div>`;
+        return;
+      }
+
+      list.innerHTML = '';
+      data.forEach(f => {
+        const a = document.createElement('a');
+        a.className = 'file-row';
+        a.href = `/uploads/${encodeURIComponent(f.name)}`;
+        a.download = f.name;
+        a.innerHTML = `
+          <span class="file-icon">${fileIcon(f.name)}</span>
+          <div class="file-info">
+            <div class="file-name">${f.name}</div>
+            <div class="file-meta">${humanSize(f.size)}</div>
+          </div>
+          <span class="dl-badge">↓ DL</span>`;
+        list.appendChild(a);
+      });
+    } catch {
+      list.innerHTML = `<div class="empty-state">
+        <div class="empty-icon">⚠</div>
+        Could not reach server — is server.py running?
+      </div>`;
+    }
+  }
+
+  document.getElementById('refresh-btn').addEventListener('click', loadFiles);
+
+  loadFiles();
+
+  const hostEl = document.getElementById('server-url');
+  if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    hostEl.textContent = `http://${window.location.hostname}:${window.location.port || 8000}`;
+  }
+</script>
+</body>
+</html>
